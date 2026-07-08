@@ -1,13 +1,5 @@
-"""
-Immo Eliza — Streamlit front-end
-Collects property details from the user, sends them to the prediction API,
-and displays the estimated price.
-"""
-
 import streamlit as st
 import requests
-
-
 
 st.set_page_config(
     page_title="Immo Eliza — Price Estimator",
@@ -74,13 +66,11 @@ def label(value: str) -> str:
     """Cleans labels for display in the UI to make them more human-readable."""
     return value.replace("_", " ").replace("(information not available)", "Not available").capitalize()
 
-
 # --------------------------------------------------------------------------
 # Header
 # --------------------------------------------------------------------------
 st.title("🏠 Immo Eliza Price Predictor")
 st.caption("Get an instant price estimate for a property in Belgium.")
-
 
 # --------------------------------------------------------------------------
 # Sidebar
