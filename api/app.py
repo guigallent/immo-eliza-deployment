@@ -1,32 +1,25 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-import joblib
+from fastapi import FastAPI, HTTPException
+import logger
+from schemas import PropertyData
+from predict import predict
+from logger import logger
+
 
 app = FastAPI()
-model = joblib.load("../model/xgboost.joblib")
 
-class PropertyData(BaseModel):
-    province: str
-    type_property: str
-    subtype_property: str
-    state_of_property: str
-    heating_type: str
-    sun_exposure: str
-    epc_score: str
-    flooding_area_type: str
-    livable_surface: float
-    latitude: float
-    longitude: float
-    facades: int
-    bedrooms: int
-    bathrooms: int
-    toilets: int
-    
 @app.get("/")
 def read_root():
+    logger.info("Health check hit.")
     return "alive"
 
-@app.get("/predict")
-def predict(property_data: PropertyData):
-
-    return "predict"
+@app.post("/predict")
+def predict_price(property_data: PropertyData):
+    # sourcery skip: raise-from-previous-error
+    logger.info(f"Prediction requested: {property_data.model_dump()}")
+    try:
+        result = predict(property_data)
+        logger.info(f"Prediction successful: {result}")
+        return result
+    except Exception as e:
+        logger.error(f"Prediction failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Prediction failed. Please check your input data.")
