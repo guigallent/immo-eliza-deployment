@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException
-import logger
 from schemas import PropertyData
 from predict import predict
 from logger import logger
@@ -20,6 +19,9 @@ def predict_price(property_data: PropertyData):
         result = predict(property_data)
         logger.info(f"Prediction successful: {result}")
         return result
+    except ValueError as e:
+        logger.warning(f"Invalid input: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Prediction failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Prediction failed. Please check your input data.")
