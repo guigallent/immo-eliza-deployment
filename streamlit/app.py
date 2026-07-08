@@ -78,9 +78,21 @@ def label(value: str) -> str:
 # --------------------------------------------------------------------------
 # Header
 # --------------------------------------------------------------------------
-st.title("🏠 Immo Eliza")
+st.title("🏠 Immo Eliza Price Predictor")
 st.caption("Get an instant price estimate for a property in Belgium.")
 
+
+# --------------------------------------------------------------------------
+# Sidebar
+# --------------------------------------------------------------------------
+st.sidebar.header("ℹ️ About Immo Eliza")
+st.sidebar.write("Immo Eliza is a tool that provides instant price estimates for properties in Belgium. It connects through an API to a machine learning model trained on real estate data to predict Belgian property prices based on their features.")
+
+st.sidebar.header("⚙️ How to use")
+st.sidebar.write("1. Fill in the property details.")
+st.sidebar.write("2. Provide the location information.")
+st.sidebar.write("3. Check the extra details.")
+st.sidebar.write("4. Click \"Submit\" to get an instant price estimate. The first time you submit, it may take some seconds to connect to the model.")
 
 # --------------------------------------------------------------------------
 # Form
@@ -193,9 +205,9 @@ if submitted:
         "swimming_pool": swimming_pool,
     }
 
-    with st.spinner("Contacting the model..."):
+    with st.spinner("Connecting to the model..."):
         try:
-            response = requests.post(f"{API_URL}/predict", json=payload, timeout=20)
+            response = requests.post(f"{API_URL}/predict", json=payload, timeout=60)
             response.raise_for_status()
             result = response.json()
             st.success("Estimate ready")
