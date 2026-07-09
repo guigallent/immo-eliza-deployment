@@ -3,7 +3,7 @@ import requests
 
 st.set_page_config(
     page_title="Immo Eliza — Price Estimator",
-    page_icon="🏠",
+    page_icon="🏡",
     layout="centered",
 )
 
@@ -64,7 +64,7 @@ def label(value: str) -> str:
 # --------------------------------------------------------------------------
 # Header
 # --------------------------------------------------------------------------
-st.title("🏠 Immo Eliza Price Predictor")
+st.title("🏡 Immo Eliza Price Predictor")
 st.caption("Get an instant price estimate for a property in Belgium")
 
 # --------------------------------------------------------------------------
@@ -147,16 +147,15 @@ with st.form("property_form"):
  
 
     st.divider()
-
     
     st.subheader("Extra details")
     col1, col2 = st.columns(2)
     with col1:
-        epc_score = st.selectbox("EPC score (optional)", EPC_SCORES, format_func=label)
+        epc_score = st.selectbox("EPC score (optional)", EPC_SCORES, format_func=label, help="Belgium's energy performance certificate rating, A+ (best) to G (worst).")
         heating_type = st.selectbox("Heating type (optional)", HEATING_TYPES, format_func=label)
     with col2:
         sun_exposure = st.selectbox("Sun exposure (optional)", SUN_EXPOSURES, format_func=label)
-        flooding_area_type = st.selectbox("Flood risk area (optional)", FLOODING_TYPES, format_func=label)
+        flooding_area_type = st.selectbox("Flood risk area (optional)", FLOODING_TYPES, format_func=label, help="Official flood risk classification for the property's zone.")
 
     submitted = st.form_submit_button("Estimate price")
 
@@ -167,6 +166,10 @@ if submitted:
     using_zip = latitude == 0.0 and longitude == 0.0
     if using_zip and not zip_code:
         st.error("Please provide a zip code, or set latitude/longitude directly.")
+        st.stop()
+
+    if using_zip and (not zip_code.isdigit() or len(zip_code) != 4):
+        st.error("Please provide a valid 4-digit Belgian zip code (e.g. 1000).")
         st.stop()
 
     if (latitude < 49.30 or latitude > 51.30 or longitude < 2.33 or longitude > 6.24) and not using_zip:
@@ -237,12 +240,18 @@ if submitted:
             st.error("The API took too long to respond. Please try again.")
         except Exception as e:
             st.error(f"Unexpected error: {e}")
+        
+        with st.expander("View submitted data"):
+            st.json(payload)
 
 st.divider()
 st.caption("Made with ❤️ by [guigallent ↗](https://github.com/guigallent). See the project code [HERE ↗](https://github.com/guigallent/immo-eliza-deployment).")
-st.caption("This project was done as part of the AI & Data Science Bootcamp at BeCode as a solo project. " \
-        "It is the final stage of the Immo Eliza pipeline, following a [property scraping project ↗](https://github.com/guigallent/immo-eliza-scraping), " \
-        "a [data analysis/visualization project ↗](https://github.com/guigallent/immo-eliza-chameleon-analysis), "
-        "and a [machine learning project ↗](https://github.com/guigallent/immo-eliza-ml). " \
-        "The model was trained on real estate data from Belgium, and the API is deployed on [Render.com ↗](https://render.com/).")
+st.caption(
+    "This project was completed solo as part of the AI & Data Science Bootcamp at BeCode. "
+    "It is the final stage of the Immo Eliza pipeline, following a [property scraping project ↗](https://github.com/guigallent/immo-eliza-scraping), "
+    "a [data analysis & visualization project ↗](https://github.com/guigallent/immo-eliza-chameleon-analysis), "
+    "and a [machine learning project ↗](https://github.com/guigallent/immo-eliza-ml). "
+    "The model (XGBoost) was trained on data from around 10,000 real estate properties in Belgium, "
+    "with the API deployed on [Render.com ↗](https://render.com/)."
+)
 st.caption("Immo Eliza API is available [HERE ↗](https://immo-eliza-deployment-jsgk.onrender.com/docs).")
