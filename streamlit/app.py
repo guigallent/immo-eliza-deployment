@@ -56,11 +56,6 @@ FLOODING_TYPES = [
     "(information_not_available)", "no_flooding_area", "low_risk",
     "possible_flooding_area", "actual_flooding_area"
 ]
-PROVINCES = [
-    "not_specified", "antwerp", "brabant_wallon", "brussels",
-    "east_flanders", "hainaut", "liege", "limburg", "luxembourg",
-    "namur", "vlaams_brabant", "west_flanders"
-]
 
 def label(value: str) -> str:
     """Cleans labels for display in the UI to make them more human-readable."""
@@ -150,11 +145,6 @@ with st.form("property_form"):
             "Longitude", min_value=0.0, max_value=6.2, value=0.0, step=0.00001, format="%.5f"
         )
  
-    #province = st.selectbox(
-    #    "Province (leave as 'Not specified' to infer it automatically)",
-    #    PROVINCES,
-    #    format_func=label,
-    #)
 
     st.divider()
 
@@ -205,7 +195,6 @@ if submitted:
 
     payload = {
         "zip_code": zip_code,
-#        "province": province,
         "latitude": latitude,
         "longitude": longitude,
         "type_property": type_property,
