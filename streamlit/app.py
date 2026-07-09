@@ -70,19 +70,22 @@ def label(value: str) -> str:
 # Header
 # --------------------------------------------------------------------------
 st.title("🏠 Immo Eliza Price Predictor")
-st.caption("Get an instant price estimate for a property in Belgium.")
+st.caption("Get an instant price estimate for a property in Belgium")
 
 # --------------------------------------------------------------------------
 # Sidebar
 # --------------------------------------------------------------------------
-st.sidebar.header("ℹ️ About Immo Eliza")
-st.sidebar.write("Immo Eliza is a tool that provides instant price estimates for properties in Belgium. It connects through an API to a machine learning model trained on real estate data to predict Belgian property prices based on their features.")
 
 st.sidebar.header("⚙️ How to use")
 st.sidebar.write("1. Fill in the property details.")
 st.sidebar.write("2. Provide the location information.")
 st.sidebar.write("3. Check the extra details.")
-st.sidebar.write("4. Click \"Submit\" to get an instant price estimate. The first time you submit, it may take some seconds to connect to the model.")
+st.sidebar.write("4. Click \"Estimate price\" to get an instant price estimate. The first time you submit, it may take some seconds to connect to the model.")
+
+st.sidebar.header("📊 Prediction Accuracy")
+st.sidebar.metric("Typical accuracy", "±19%", help="On average, predictions land within about 19% of the actual sale price")
+st.sidebar.metric("Explains price variation", "74%", help= "Estimates are most reliable for typical Belgian properties. "
+    "Unique or unusual homes may see larger deviations.")
 
 # --------------------------------------------------------------------------
 # Form
@@ -102,7 +105,7 @@ with st.form("property_form"):
             "Livable surface (m²)", min_value=1.0, max_value=2000.0, value=40.0, step=5.0
         )
     with col2:
-        state_of_property = st.selectbox("State of property", STATES, format_func=label)
+        state_of_property = st.selectbox("State of property (optional)", STATES, format_func=label)
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -126,33 +129,36 @@ with st.form("property_form"):
         swimming_pool = st.checkbox("Pool")
 
     st.divider()
+
+
     st.subheader("Location")
 
-    location_mode = st.radio(
-        "How do you want to provide the location?",
-        ["Zip code", "Coordinates"],
-        horizontal=True,
+    st.caption(
+        "Provide a zip code, or set latitude/longitude directly. "
+        "If both latitude and longitude are left at 0.0, the zip code is used to resolve the location."
     )
-
-    zip_code = None
-    latitude, longitude = 0.0, 0.0
-
-    if location_mode == "Zip code":
-        zip_code = st.text_input("Zip code", placeholder="e.g. 1000")
-    else:
-        col1, col2 = st.columns(2)
-        with col1:
-            latitude = st.number_input("Latitude", min_value=49.4, max_value=51.6, value=50.85, format="%.5f")
-        with col2:
-            longitude = st.number_input("Longitude", min_value=2.5, max_value=6.2, value=4.35, format="%.5f")
-
-    province = st.selectbox(
-        "Province (leave as 'Not specified' to infer it automatically)",
-        PROVINCES,
-        format_func=label,
-    )
+ 
+    zip_code = st.text_input("Zip code", placeholder="e.g. 1000")
+ 
+    col1, col2 = st.columns(2)
+    with col1:
+        latitude = st.number_input(
+            "Latitude", min_value=0.0, max_value=51.30, value=0.0, step=0.00001, format="%.5f"
+        )
+    with col2:
+        longitude = st.number_input(
+            "Longitude", min_value=0.0, max_value=6.2, value=0.0, step=0.00001, format="%.5f"
+        )
+ 
+    #province = st.selectbox(
+    #    "Province (leave as 'Not specified' to infer it automatically)",
+    #    PROVINCES,
+    #    format_func=label,
+    #)
 
     st.divider()
+
+    
     st.subheader("Extra details")
     col1, col2 = st.columns(2)
     with col1:
@@ -168,13 +174,38 @@ with st.form("property_form"):
 # Submit & call API
 # --------------------------------------------------------------------------
 if submitted:
-    if location_mode == "Zip code" and not zip_code:
-        st.error("Please provide a zip code, or switch to entering coordinates directly.")
+    using_zip = latitude == 0.0 and longitude == 0.0
+    if using_zip and not zip_code:
+        st.error("Please provide a zip code, or set latitude/longitude directly.")
+        st.stop()
+
+    if (latitude < 49.30 or latitude > 51.30 or longitude < 2.33 or longitude > 6.24) and not using_zip:
+        st.error("Please provide valid latitude and longitude values.")
+        st.stop()
+    
+    if livable_surface <= 0 or livable_surface > 2000:
+        st.error("Please provide a valid livable surface value (1-2000 m²).")
+        st.stop()
+
+    if facades < 0 or facades > 4:
+        st.error("Please provide a valid number of facades (0-4).")
+        st.stop()
+
+    if bedrooms < 0 or bedrooms > 10:
+        st.error("Please provide a valid number of bedrooms (0-10).")
+        st.stop()
+
+    if bathrooms < 0 or bathrooms > 10:
+        st.error("Please provide a valid number of bathrooms (0-10).")
+        st.stop()
+    
+    if toilets < 0 or toilets > 10:
+        st.error("Please provide a valid number of toilets (0-10).")
         st.stop()
 
     payload = {
         "zip_code": zip_code,
-        "province": province,
+#        "province": province,
         "latitude": latitude,
         "longitude": longitude,
         "type_property": type_property,
@@ -195,12 +226,12 @@ if submitted:
         "swimming_pool": swimming_pool,
     }
 
-    with st.spinner("Connecting to the model..."):
+    with st.spinner("Connecting to the model. It may take up to 30 seconds the first time you submit."):
         try:
             response = requests.post(f"{API_URL}/predict", json=payload, timeout=60)
             response.raise_for_status()
             result = response.json()
-            st.success("Estimate ready")
+            st.success("Estimate ready!")
             st.metric("Estimated price", f"€ {result['prediction']:,.0f}")
         except requests.exceptions.HTTPError:
             try:
@@ -219,4 +250,10 @@ if submitted:
             st.error(f"Unexpected error: {e}")
 
 st.divider()
-st.caption(f"Connected API: {API_URL}")
+st.caption("Made with ❤️ by [guigallent ↗](https://github.com/guigallent). See the project code [HERE ↗](https://github.com/guigallent/immo-eliza-deployment).")
+st.caption("This project was done as part of the AI & Data Science Bootcamp at BeCode as a solo project. " \
+        "It is the final stage of the Immo Eliza pipeline, following a [property scraping project ↗](https://github.com/guigallent/immo-eliza-scraping), " \
+        "a [data analysis/visualization project ↗](https://github.com/guigallent/immo-eliza-chameleon-analysis), "
+        "and a [machine learning project ↗](https://github.com/guigallent/immo-eliza-ml). " \
+        "The model was trained on real estate data from Belgium, and the API is deployed on [Render.com ↗](https://render.com/).")
+st.caption("Immo Eliza API is available [HERE ↗](https://immo-eliza-deployment-jsgk.onrender.com/docs).")
