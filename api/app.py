@@ -8,12 +8,15 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
+    """Health check endpoint to verify that the API is running."""
+
     logger.info("Health check hit.")
     return "alive"
 
 @app.post("/predict")
 def predict_price(property_data: PropertyData):
-    # sourcery skip: raise-from-previous-error
+    """Endpoint to predict the price of a property based on the provided data."""
+
     logger.info(f"Prediction requested: {property_data.model_dump()}")
     try:
         result = predict(property_data)

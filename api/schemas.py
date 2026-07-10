@@ -44,6 +44,8 @@ class PropertyData(BaseModel):
 
 @model_validator(mode="after")
 def check_location(self):
+    """Validates the location data provided in the PropertyData model."""
+    
     using_zip = self.latitude == 0 and self.longitude == 0
 
     if using_zip:
