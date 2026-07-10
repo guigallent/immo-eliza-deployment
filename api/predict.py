@@ -14,6 +14,7 @@ model = joblib.load(MODEL_DIR / "xgboost.joblib")
 preprocessor = joblib.load(ARTIFACTS_DIR / "preprocessor.joblib")
 
 def predict(property_data: PropertyData):
+    """Predicts the price of a property based on the provided data."""
     try:
         data = property_data.model_dump()
 
